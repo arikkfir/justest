@@ -79,8 +79,8 @@ You can easily create your own matchers by implementing the `Matcher` interface:
 package my_test
 
 import (
-	"reflect"
 	. "github.com/arikkfir/justest"
+	"reflect"
 )
 
 var (
@@ -115,3 +115,9 @@ func BeSuperDuper() Matcher {
 | Not()               | Checks that the given matcher fails                                          |
 | Say()               | Checks that all given values match the given regular expression              |
 | Succeed()           | Checks that the last given value is either nil or not an `error` instance    |
+
+## Contributing
+
+Please do :ok_hand: :pray: :muscle: !
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
