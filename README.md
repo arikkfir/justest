@@ -118,6 +118,6 @@ func BeSuperDuper() Matcher {
 
 ## Contributing
 
-Please do :ok_hand: :pray: :muscle: !
+Please do :ok_hand: :muscle: !
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more information :pray:
