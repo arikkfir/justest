@@ -96,7 +96,12 @@ Here are a few things you can do that will increase the likelihood of your pull 
 
 ### Merging strategy
 
-The `main` branch must retain linear history, and that means the only allowed merge strategy in this repository is the "Rebase" strategy. It also means that reviews must be done on the tip of the PR, and once you rebase or force-push to restructure commits, another review will be required.
+Following restrictions apply:
+
+- Linear history is required for the `main` branch
+- That means your branch must be up-to-date and rebased on top of the `main` branch before merging
+- That might also mean that occasionally re-review might be warranted if `main` has changed after the PR was approved
+- The only merging strategy allowed for PRs is "Squash and merge"
 
 ## Resources
 
