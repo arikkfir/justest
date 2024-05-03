@@ -2,7 +2,9 @@
 
 Hi there! We're thrilled that you'd like to contribute to this project. Your help is essential for keeping it great.
 
-Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+> [!IMPORTANT]
+> This project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project
+> you agree to abide by its terms.
 
 ## Setup
 
@@ -85,14 +87,11 @@ We'd also love PRs. If you're thinking of a large PR, we advise opening up an is
 5. Push to your fork, and submit a pull request
 6. Pat your self on the back and wait for your pull request to be reviewed and merged.
 
-Here are a few things you can do that will increase the likelihood of your pull request being accepted:
-
-- Ensure you write and/or update tests to match the new/modified functionality
-- Keep your PR as focused as possible, avoid PRs that add multiple unrelated features or fix multiple bugs at once
-- Keep your PR as small as possible, to make reviewing easier and faster
-- Provide any and all necessary information in the PR description to help reviewers understand the context and impact of your change.
-- Work in Progress pull requests are also welcome to get feedback early on, or if there is something blocked you
-  - Make sure you use GitHub's "Draft PR" feature for these
+> [!TIP]
+> To increase the likelihood of your pull request being accepted, follow these guidelines:
+> - Add/update tests
+> - Avoid unrelated changes, stay focused
+> - Keep your PR as small as possible, to make reviewing easier and faster
 
 ### Merging strategy
 
