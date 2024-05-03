@@ -1,5 +1,10 @@
 # justest
 
+![Maintainer](https://img.shields.io/badge/maintainer-arikkfir-blue)
+![GoVersion](https://img.shields.io/github/go-mod/go-version/arikkfir/justest.svg)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://godoc.org/github.com/arikkfir/justest)
+[![GoReportCard](https://goreportcard.com/badge/github.com/arikkfir/justest)](https://goreportcard.com/report/github.com/arikkfir/justest)
+
 > Go testing framework with extra sugar
 
 This Go testing framework has the following goals:
