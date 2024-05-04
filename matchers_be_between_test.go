@@ -100,8 +100,11 @@ func TestBeBetween(t *testing.T) {
 		},
 	}
 	for kind, kindTestCases := range testCases {
+		kind := kind
+		kindTestCases := kindTestCases
 		t.Run(kind.String(), func(t *testing.T) {
 			for name, tc := range kindTestCases {
+				tc := tc
 				t.Run(name, func(t *testing.T) {
 					if tc.expectFailurePattern != nil {
 						defer VerifyTestOutcome(t, ExpectFailure, *tc.expectFailurePattern)

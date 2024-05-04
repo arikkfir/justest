@@ -28,6 +28,7 @@ func TestBeEmpty(t *testing.T) {
 		"Non-empty string fails": {actual: "abc", expectedOutcome: ExpectFailure, expectFailurePattern: regexp.QuoteMeta(`Expected 'abc' to be empty, but it is not (has a length of 3)`)},
 	}
 	for name, tc := range testCases {
+		tc := tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			defer VerifyTestOutcome(t, tc.expectedOutcome, tc.expectFailurePattern)

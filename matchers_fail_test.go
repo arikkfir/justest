@@ -35,6 +35,7 @@ func TestFail(t *testing.T) {
 		},
 	}
 	for name, tc := range testCases {
+		tc := tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			defer VerifyTestOutcome(t, tc.expectedOutcome, tc.expectFailurePattern)
