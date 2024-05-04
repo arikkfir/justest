@@ -35,8 +35,8 @@ var (
 	}
 	ignoredStackTracePrefixes = []string{
 		"testing.",
-		"github.com/arikkfir/devbot/backend/internal/util/testing/justest/",
-		"github.com/arikkfir/devbot/backend/internal/util/testing/justest.",
+		"github.com/arikkfir/justest/",
+		"github.com/arikkfir/justest.",
 	}
 )
 

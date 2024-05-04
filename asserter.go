@@ -291,7 +291,7 @@ func (a *assertion) Fatalf(format string, args ...any) {
 		callerFunction, callerFile, callerLine := caller.Location()
 
 		format = format + "\n%s:%d --> %s"
-		if matches, err := regexp.MatchString(`.*backend/internal/util/testing/justest\.`, callerFunction); err != nil {
+		if matches, err := regexp.MatchString(`.*/arikkfir/justest\.`, callerFunction); err != nil {
 			panic(fmt.Errorf("illegal regexp matching: %+v", err))
 		} else if matches {
 			// Caller is "justest" internal (e.g. "a.OrFail", "a.For", "a.Within") - only add the assertion location
