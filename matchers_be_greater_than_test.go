@@ -76,9 +76,12 @@ func TestBeGreaterThan(t *testing.T) {
 		},
 	}
 	for kind, kindTestCases := range testCases {
+		kind := kind
+		kindTestCases := kindTestCases
 		t.Run(kind.String(), func(t *testing.T) {
 			t.Parallel()
 			for name, tc := range kindTestCases {
+				tc := tc
 				t.Run(name, func(t *testing.T) {
 					t.Parallel()
 					if tc.expectFailurePattern != nil {

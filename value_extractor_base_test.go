@@ -73,6 +73,7 @@ func TestValueExtractor(t *testing.T) {
 		},
 	}
 	for name, tc := range testCases {
+		tc := tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			mt := NewMockT(t)
@@ -172,6 +173,7 @@ func TestNewChannelExtractor(t *testing.T) {
 		},
 	}
 	for name, tc := range testCases {
+		tc := tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			mt := NewMockT(t)
@@ -235,6 +237,7 @@ func TestNewPointerExtractor(t *testing.T) {
 		},
 	}
 	for name, tc := range testCases {
+		tc := tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			mt := NewMockT(t)
@@ -382,6 +385,7 @@ func TestNewFuncExtractor(t *testing.T) {
 		},
 	}
 	for name, tc := range testCases {
+		tc := tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			mt := NewMockT(t)

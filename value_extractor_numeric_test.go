@@ -37,6 +37,7 @@ func TestNumericValueExtractor(t *testing.T) {
 		"uint64":               {actual: uint64(1), expectedOutcome: ExpectSuccess, expected: uint64(1)},
 	}
 	for name, tc := range testCases {
+		tc := tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			defer VerifyTestOutcome(t, tc.expectedOutcome, tc.expectedOutcomePattern)
