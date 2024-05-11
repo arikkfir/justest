@@ -1,8 +1,9 @@
 package justest
 
 import (
-	. "github.com/arikkfir/justest/internal"
 	"reflect"
+
+	. "github.com/arikkfir/justest/internal"
 )
 
 var (

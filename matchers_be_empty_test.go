@@ -1,38 +1,39 @@
 package justest_test
 
 import (
-	. "github.com/arikkfir/justest"
-	. "github.com/arikkfir/justest/internal"
 	"regexp"
 	"testing"
+
+	. "github.com/arikkfir/justest"
+	. "github.com/arikkfir/justest/internal"
 )
 
 func TestBeEmpty(t *testing.T) {
 	t.Parallel()
 	type testCase struct {
-		actual               any
-		expectedOutcome      TestOutcomeExpectation
-		expectFailurePattern string
+		actual   any
+		verifier TestOutcomeVerifier
 	}
 	//goland:noinspection GoRedundantConversion
 	testCases := map[string]testCase{
-		"Empty array matches":    {actual: [0]int{}, expectedOutcome: ExpectSuccess},
-		"Non-empty array fails":  {actual: [3]int{1, 2, 3}, expectedOutcome: ExpectFailure, expectFailurePattern: regexp.QuoteMeta(`Expected '[1 2 3]' to be empty, but it is not (has a length of 3)`)},
-		"Empty chan matches":     {actual: ChanOf[int](), expectedOutcome: ExpectSuccess},
-		"Non-empty chan fails":   {actual: ChanOf[int](1, 2, 3), expectedOutcome: ExpectFailure, expectFailurePattern: `Expected '.+' to be empty, but it is not \(has a length of 3\)`},
-		"Empty map matches":      {actual: map[int]int{}, expectedOutcome: ExpectSuccess},
-		"Non-empty map fails":    {actual: map[int]int{1: 1, 2: 2, 3: 3}, expectedOutcome: ExpectFailure, expectFailurePattern: regexp.QuoteMeta(`Expected 'map[1:1 2:2 3:3]' to be empty, but it is not (has a length of 3)`)},
-		"Empty slice matches":    {actual: []int{}, expectedOutcome: ExpectSuccess},
-		"Non-empty slice fails":  {actual: []int{1, 2, 3}, expectedOutcome: ExpectFailure, expectFailurePattern: regexp.QuoteMeta(`Expected '[1 2 3]' to be empty, but it is not (has a length of 3)`)},
-		"Empty string matches":   {actual: "", expectedOutcome: ExpectSuccess},
-		"Non-empty string fails": {actual: "abc", expectedOutcome: ExpectFailure, expectFailurePattern: regexp.QuoteMeta(`Expected 'abc' to be empty, but it is not (has a length of 3)`)},
+		"Empty array matches":    {actual: [0]int{}, verifier: SuccessVerifier()},
+		"Non-empty array fails":  {actual: [3]int{1, 2, 3}, verifier: FailureVerifier(regexp.QuoteMeta(`Expected '[1 2 3]' to be empty, but it is not (has a length of 3)`))},
+		"Empty chan matches":     {actual: ChanOf[int](), verifier: SuccessVerifier()},
+		"Non-empty chan fails":   {actual: ChanOf[int](1, 2, 3), verifier: FailureVerifier(`Expected '.+' to be empty, but it is not \(has a length of 3\)`)},
+		"Empty map matches":      {actual: map[int]int{}, verifier: SuccessVerifier()},
+		"Non-empty map fails":    {actual: map[int]int{1: 1, 2: 2, 3: 3}, verifier: FailureVerifier(regexp.QuoteMeta(`Expected 'map[1:1 2:2 3:3]' to be empty, but it is not (has a length of 3)`))},
+		"Empty slice matches":    {actual: []int{}, verifier: SuccessVerifier()},
+		"Non-empty slice fails":  {actual: []int{1, 2, 3}, verifier: FailureVerifier(regexp.QuoteMeta(`Expected '[1 2 3]' to be empty, but it is not (has a length of 3)`))},
+		"Empty string matches":   {actual: "", verifier: SuccessVerifier()},
+		"Non-empty string fails": {actual: "abc", verifier: FailureVerifier(regexp.QuoteMeta(`Expected 'abc' to be empty, but it is not (has a length of 3)`))},
 	}
 	for name, tc := range testCases {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			defer VerifyTestOutcome(t, tc.expectedOutcome, tc.expectFailurePattern)
-			With(NewMockT(t)).Verify(tc.actual).Will(BeEmpty()).OrFail()
+			mt := NewMockT(t)
+			defer mt.Verify(tc.verifier)
+			With(mt).Verify(tc.actual).Will(BeEmpty()).OrFail()
 		})
 	}
 }

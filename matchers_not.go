@@ -2,6 +2,7 @@ package justest
 
 import (
 	"fmt"
+
 	. "github.com/arikkfir/justest/internal"
 )
 

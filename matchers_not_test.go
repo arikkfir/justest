@@ -1,55 +1,41 @@
 package justest_test
 
 import (
-	. "github.com/arikkfir/justest"
 	"testing"
+
+	. "github.com/arikkfir/justest"
 )
 
 func TestNot(t *testing.T) {
-	type Verifier func(t T)
 	type testCase struct {
-		actuals              []any
-		matcherGenerator     func(t T, tc *testCase) (Matcher, Verifier)
-		expectedOutcome      TestOutcomeExpectation
-		expectFailurePattern string
+		actuals  []any
+		matcher  MatcherFunc
+		verifier TestOutcomeVerifier
 	}
 	testCases := map[string]testCase{
 		"Failed matcher succeeds": {
-			actuals: []any{"foo-bar"},
-			matcherGenerator: func(t T, tc *testCase) (Matcher, Verifier) {
-				m := MatcherFunc(func(t T, actual ...any) { t.Fatalf("should be ignored"); panic("unreachable") })
-				return m, nil
-			},
-			expectedOutcome: ExpectSuccess,
+			actuals:  []any{"foo-bar"},
+			matcher:  MatcherFunc(func(t T, actual ...any) { t.Fatalf("should be ignored"); panic("unreachable") }),
+			verifier: SuccessVerifier(),
 		},
 		"Successful matcher fails": {
-			actuals: []any{"foo-bar"},
-			matcherGenerator: func(t T, tc *testCase) (Matcher, Verifier) {
-				return MatcherFunc(func(t T, actual ...any) {}), nil
-			},
-			expectedOutcome:      ExpectFailure,
-			expectFailurePattern: `Expected this matcher to fail, but it did not`,
+			actuals:  []any{"foo-bar"},
+			matcher:  MatcherFunc(func(t T, actual ...any) {}),
+			verifier: FailureVerifier(`Expected this matcher to fail, but it did not`),
 		},
 		"Panicking matcher re-panics": {
-			actuals: []any{"foo-bar"},
-			matcherGenerator: func(t T, tc *testCase) (Matcher, Verifier) {
-				return MatcherFunc(func(t T, actual ...any) { panic("panic propagated") }), nil
-			},
-			expectedOutcome:      ExpectPanic,
-			expectFailurePattern: `panic propagated`,
+			actuals:  []any{"foo-bar"},
+			matcher:  MatcherFunc(func(t T, actual ...any) { panic("panic propagated") }),
+			verifier: PanicVerifier(`panic propagated`),
 		},
 	}
 	for name, tc := range testCases {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			defer VerifyTestOutcome(t, tc.expectedOutcome, tc.expectFailurePattern)
 			mt := NewMockT(t)
-			m, v := tc.matcherGenerator(mt, &tc)
-			With(mt).Verify(tc.actuals...).Will(Not(m)).OrFail()
-			if v != nil {
-				v(mt)
-			}
+			defer mt.Verify(tc.verifier)
+			With(mt).Verify(tc.actuals...).Will(Not(tc.matcher)).OrFail()
 		})
 	}
 }

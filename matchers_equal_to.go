@@ -1,8 +1,9 @@
 package justest
 
 import (
-	"github.com/google/go-cmp/cmp"
 	"strings"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 type Comparator func(t T, expected any, actual any)
