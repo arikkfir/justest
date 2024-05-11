@@ -2,6 +2,7 @@ package justest
 
 import (
 	"fmt"
+	"testing"
 )
 
 type T interface {
@@ -33,4 +34,17 @@ func GetHelper(t T) interface{ Helper() } {
 		}
 	}
 	return &noOpHelper{}
+}
+
+//go:noinline
+func GetRoot(t T) *testing.T {
+	for {
+		if hp, ok := t.(HasParent); ok {
+			t = hp.GetParent()
+		} else if rt, ok := t.(*testing.T); ok {
+			return rt
+		} else {
+			panic(fmt.Sprintf("unsupported T instance: %+v (%T)", t, t))
+		}
+	}
 }
