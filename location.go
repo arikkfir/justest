@@ -3,12 +3,14 @@ package justest
 import (
 	"bytes"
 	"fmt"
-	"github.com/alecthomas/chroma/v2/quick"
-	"github.com/arikkfir/justest/internal"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
+
+	"github.com/alecthomas/chroma/v2/quick"
+
+	"github.com/arikkfir/justest/internal"
 )
 
 // Display mode
@@ -84,9 +86,20 @@ func readSourceAt(file string, line int) string {
 		lines := strings.Split(fileContents, "\n")
 		if len(lines) > line {
 			source = strings.TrimSpace(lines[line-1])
-			output := bytes.Buffer{}
-			if err := quick.Highlight(&output, source, "go", goSourceFormatter, goSourceStyle[displayMode]); err == nil {
-				source = output.String()
+
+			highlight := true
+			if highlightEnv := os.Getenv("JUSTEST_DISABLE_SOURCE_HIGHLIGHT"); highlightEnv != "" {
+				if val, err := strconv.ParseBool(highlightEnv); err != nil {
+					panic(fmt.Sprintf("Error parsing JUSTEST_HIGHLIGHT_SOURCE environment variable - illegal value: %s", highlightEnv))
+				} else {
+					highlight = val
+				}
+			}
+			if highlight {
+				output := bytes.Buffer{}
+				if err := quick.Highlight(&output, source, "go", goSourceFormatter, goSourceStyle[displayMode]); err == nil {
+					source = output.String()
+				}
 			}
 		}
 	}
