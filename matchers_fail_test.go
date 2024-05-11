@@ -2,44 +2,42 @@ package justest_test
 
 import (
 	"fmt"
-	. "github.com/arikkfir/justest"
 	"testing"
+
+	. "github.com/arikkfir/justest"
 )
 
 func TestFail(t *testing.T) {
 	t.Parallel()
 	type testCase struct {
-		actuals              []any
-		expectedOutcome      TestOutcomeExpectation
-		expectFailurePattern string
+		actuals  []any
+		verifier TestOutcomeVerifier
 	}
 	testCases := map[string]testCase{
 		"Fails if no actuals": {
-			actuals:              []any{},
-			expectedOutcome:      ExpectFailure,
-			expectFailurePattern: `No error occurred`,
+			actuals:  []any{},
+			verifier: FailureVerifier(`No error occurred`),
 		},
 		"Fails if last actual is nil": {
-			actuals:              []any{1, 2, nil},
-			expectedOutcome:      ExpectFailure,
-			expectFailurePattern: `No error occurred`,
+			actuals:  []any{1, 2, nil},
+			verifier: FailureVerifier(`No error occurred`),
 		},
 		"Succeeds if last actual is an error": {
-			actuals:         []any{1, fmt.Errorf("expected error")},
-			expectedOutcome: ExpectSuccess,
+			actuals:  []any{1, fmt.Errorf("expected error")},
+			verifier: SuccessVerifier(),
 		},
 		"Fails if last actual is non-nil and not an error": {
-			actuals:              []any{1, 2, 3},
-			expectedOutcome:      ExpectFailure,
-			expectFailurePattern: `No error occurred`,
+			actuals:  []any{1, 2, 3},
+			verifier: FailureVerifier(`No error occurred`),
 		},
 	}
 	for name, tc := range testCases {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			defer VerifyTestOutcome(t, tc.expectedOutcome, tc.expectFailurePattern)
-			With(NewMockT(t)).Verify(tc.actuals...).Will(Fail()).OrFail()
+			mt := NewMockT(t)
+			defer mt.Verify(tc.verifier)
+			With(mt).Verify(tc.actuals...).Will(Fail()).OrFail()
 		})
 	}
 }

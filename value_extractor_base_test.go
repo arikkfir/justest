@@ -2,11 +2,13 @@ package justest_test
 
 import (
 	"fmt"
-	. "github.com/arikkfir/justest"
-	. "github.com/arikkfir/justest/internal"
-	"github.com/google/go-cmp/cmp"
 	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
+
+	. "github.com/arikkfir/justest"
+	. "github.com/arikkfir/justest/internal"
 )
 
 var (
@@ -17,18 +19,17 @@ func TestValueExtractor(t *testing.T) {
 	t.Parallel()
 	alwaysBarExtractor := func(t T, v any) (any, bool) { return "bar", true }
 	type testCase struct {
-		valueExtractorFactory   func() ValueExtractor
-		verifier                func(t T, ve ValueExtractor) []any
-		expectedOutcome         TestOutcomeExpectation
-		expectedOutcomePattern  string
-		expectedVerifierResults []any
+		valueExtractorFactory func() ValueExtractor
+		verifier              func(t T, ve ValueExtractor) []any
+		outcomeVerifier       TestOutcomeVerifier
+		expectedResults       []any
 	}
 	testCases := map[string]testCase{
 		"Default extractor is used when no extractors have been defined": {
-			valueExtractorFactory:   func() ValueExtractor { return NewValueExtractor(alwaysBarExtractor) },
-			verifier:                func(t T, ve ValueExtractor) []any { return []any{ve.MustExtractValue(t, "foo")} },
-			expectedOutcome:         ExpectSuccess,
-			expectedVerifierResults: []any{"bar"},
+			valueExtractorFactory: func() ValueExtractor { return NewValueExtractor(alwaysBarExtractor) },
+			verifier:              func(t T, ve ValueExtractor) []any { return []any{ve.MustExtractValue(t, "foo")} },
+			outcomeVerifier:       SuccessVerifier(),
+			expectedResults:       []any{"bar"},
 		},
 		"Nil actual finds nil result": {
 			valueExtractorFactory: func() ValueExtractor { return NewValueExtractor(alwaysBarExtractor) },
@@ -36,8 +37,8 @@ func TestValueExtractor(t *testing.T) {
 				v, found := ve.ExtractValue(t, nil)
 				return []any{v, found}
 			},
-			expectedOutcome:         ExpectSuccess,
-			expectedVerifierResults: []any{nil, true},
+			outcomeVerifier: SuccessVerifier(),
+			expectedResults: []any{nil, true},
 		},
 		"Invokes correct extractor when kind found": {
 			valueExtractorFactory: func() ValueExtractor {
@@ -49,8 +50,8 @@ func TestValueExtractor(t *testing.T) {
 				v, found := ve.ExtractValue(t, "bar")
 				return []any{v, found}
 			},
-			expectedOutcome:         ExpectSuccess,
-			expectedVerifierResults: []any{"foo: bar", true},
+			outcomeVerifier: SuccessVerifier(),
+			expectedResults: []any{"foo: bar", true},
 		},
 		"Default extractor when kind not found": {
 			valueExtractorFactory: func() ValueExtractor {
@@ -62,14 +63,13 @@ func TestValueExtractor(t *testing.T) {
 				v, found := ve.ExtractValue(t, 1)
 				return []any{v, found}
 			},
-			expectedOutcome:         ExpectSuccess,
-			expectedVerifierResults: []any{1, true},
+			outcomeVerifier: SuccessVerifier(),
+			expectedResults: []any{1, true},
 		},
 		"Failure occurs when value is required and not found": {
-			valueExtractorFactory:  func() ValueExtractor { return NewValueExtractor(func(t T, v any) (any, bool) { return nil, false }) },
-			verifier:               func(t T, ve ValueExtractor) []any { return []any{ve.MustExtractValue(t, 1)} },
-			expectedOutcome:        ExpectFailure,
-			expectedOutcomePattern: `Value could not be extracted from an actual of type 'int': 1`,
+			valueExtractorFactory: func() ValueExtractor { return NewValueExtractor(func(t T, v any) (any, bool) { return nil, false }) },
+			verifier:              func(t T, ve ValueExtractor) []any { return []any{ve.MustExtractValue(t, 1)} },
+			outcomeVerifier:       FailureVerifier(`Value could not be extracted from an actual of type 'int': 1`),
 		},
 	}
 	for name, tc := range testCases {
@@ -77,14 +77,14 @@ func TestValueExtractor(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			mt := NewMockT(t)
-			defer VerifyTestOutcome(t, tc.expectedOutcome, tc.expectedOutcomePattern)
+			defer mt.Verify(tc.outcomeVerifier)
 			ve := tc.valueExtractorFactory()
 			if tc.verifier != nil {
 				verifierResults := tc.verifier(mt, ve)
-				if !cmp.Equal(tc.expectedVerifierResults, verifierResults) {
-					t.Fatalf("Unexpected verifier results:\n%s", cmp.Diff(tc.expectedVerifierResults, verifierResults))
+				if !cmp.Equal(tc.expectedResults, verifierResults) {
+					t.Fatalf("Unexpected verifier results:\n%s", cmp.Diff(tc.expectedResults, verifierResults))
 				}
-			} else if tc.expectedVerifierResults != nil {
+			} else if tc.expectedResults != nil {
 				t.Fatalf("Illegal test definition - verifier is nil, but expected verifier results are not")
 			}
 		})
@@ -98,8 +98,7 @@ func TestNewChannelExtractor(t *testing.T) {
 		extractorsMap            map[reflect.Kind]Extractor
 		chanProvider             func() chan any
 		recurse                  bool
-		expectedOutcome          TestOutcomeExpectation
-		expectedOutcomePattern   string
+		expectedOutcome          TestOutcomeVerifier
 		expectedExtractorResults []any
 	}
 	testCases := map[string]testCase{
@@ -110,13 +109,13 @@ func TestNewChannelExtractor(t *testing.T) {
 				close(ch)
 				return ch
 			},
-			expectedOutcome:          ExpectSuccess,
+			expectedOutcome:          SuccessVerifier(),
 			expectedExtractorResults: []any{nil, false},
 		},
 		"Empty & open channel returns nil & not-found": {
 			defaultExtractor:         ExtractorUnsupported,
 			chanProvider:             func() chan any { return make(chan any, 1) },
-			expectedOutcome:          ExpectSuccess,
+			expectedOutcome:          SuccessVerifier(),
 			expectedExtractorResults: []any{nil, false},
 		},
 		"Recurse properly returns a found value result": {
@@ -128,7 +127,7 @@ func TestNewChannelExtractor(t *testing.T) {
 				return ch
 			},
 			recurse:                  true,
-			expectedOutcome:          ExpectSuccess,
+			expectedOutcome:          SuccessVerifier(),
 			expectedExtractorResults: []any{"foo: bar", true},
 		},
 		"Recurse properly returns a nil & not-found result": {
@@ -140,7 +139,7 @@ func TestNewChannelExtractor(t *testing.T) {
 				return ch
 			},
 			recurse:                  true,
-			expectedOutcome:          ExpectSuccess,
+			expectedOutcome:          SuccessVerifier(),
 			expectedExtractorResults: []any{nil, false},
 		},
 		"Recurse properly propagates extraction failure": {
@@ -157,7 +156,7 @@ func TestNewChannelExtractor(t *testing.T) {
 				return ch
 			},
 			recurse:         true,
-			expectedOutcome: ExpectFailure,
+			expectedOutcome: FailureVerifier(`^Extractor fails$`),
 		},
 		"No recurse returns raw value": {
 			defaultExtractor: ExtractorUnsupported,
@@ -168,7 +167,7 @@ func TestNewChannelExtractor(t *testing.T) {
 				return ch
 			},
 			recurse:                  false,
-			expectedOutcome:          ExpectSuccess,
+			expectedOutcome:          SuccessVerifier(),
 			expectedExtractorResults: []any{"bar", true}, // Will show that the string extractor above wasn't called
 		},
 	}
@@ -177,7 +176,7 @@ func TestNewChannelExtractor(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			mt := NewMockT(t)
-			defer VerifyTestOutcome(t, tc.expectedOutcome, tc.expectedOutcomePattern)
+			defer mt.Verify(tc.expectedOutcome)
 			extractor := NewChannelExtractor(NewValueExtractorWithMap(tc.defaultExtractor, tc.extractorsMap), tc.recurse)
 			actual, found := extractor(mt, tc.chanProvider())
 			if !cmp.Equal(tc.expectedExtractorResults, []any{actual, found}) {
@@ -194,8 +193,7 @@ func TestNewPointerExtractor(t *testing.T) {
 		extractorsMap            map[reflect.Kind]Extractor
 		actual                   any
 		recurse                  bool
-		expectedOutcome          TestOutcomeExpectation
-		expectedOutcomePattern   string
+		expectedOutcome          TestOutcomeVerifier
 		expectedExtractorResults []any
 	}
 	testCases := map[string]testCase{
@@ -204,7 +202,7 @@ func TestNewPointerExtractor(t *testing.T) {
 			extractorsMap:            map[reflect.Kind]Extractor{reflect.String: StringExtractorAddingFooPrefix},
 			actual:                   Ptr[string]("bar"),
 			recurse:                  true,
-			expectedOutcome:          ExpectSuccess,
+			expectedOutcome:          SuccessVerifier(),
 			expectedExtractorResults: []any{"foo: bar", true},
 		},
 		"Recurse properly extracts nil & not-found result": {
@@ -212,7 +210,7 @@ func TestNewPointerExtractor(t *testing.T) {
 			extractorsMap:            map[reflect.Kind]Extractor{reflect.String: func(t T, v any) (any, bool) { return nil, false }},
 			actual:                   Ptr[string]("bar"),
 			recurse:                  true,
-			expectedOutcome:          ExpectSuccess,
+			expectedOutcome:          SuccessVerifier(),
 			expectedExtractorResults: []any{nil, false},
 		},
 		"Recurse properly propagates extraction failure": {
@@ -223,16 +221,15 @@ func TestNewPointerExtractor(t *testing.T) {
 					panic("unreachable")
 				},
 			},
-			actual:                 Ptr[string]("bar"),
-			recurse:                true,
-			expectedOutcome:        ExpectFailure,
-			expectedOutcomePattern: `^Extractor failed$`,
+			actual:          Ptr[string]("bar"),
+			recurse:         true,
+			expectedOutcome: FailureVerifier(`^Extractor failed$`),
 		},
 		"No recurse returns raw result": {
 			defaultExtractor:         ExtractorUnsupported,
 			actual:                   Ptr[string]("bar"),
 			recurse:                  false,
-			expectedOutcome:          ExpectSuccess,
+			expectedOutcome:          SuccessVerifier(),
 			expectedExtractorResults: []any{"bar", true},
 		},
 	}
@@ -241,7 +238,7 @@ func TestNewPointerExtractor(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			mt := NewMockT(t)
-			defer VerifyTestOutcome(t, tc.expectedOutcome, tc.expectedOutcomePattern)
+			defer mt.Verify(tc.expectedOutcome)
 			extractor := NewPointerExtractor(NewValueExtractorWithMap(tc.defaultExtractor, tc.extractorsMap), tc.recurse)
 			actual, found := extractor(mt, tc.actual)
 			if !cmp.Equal(tc.expectedExtractorResults, []any{actual, found}) {
@@ -263,8 +260,7 @@ func TestNewFuncExtractor(t *testing.T) {
 		called                   bool
 		wantCalled               bool
 		wantErr                  bool
-		expectedOutcome          TestOutcomeExpectation
-		expectedOutcomePattern   string
+		expectedOutcome          TestOutcomeVerifier
 		expectedExtractorResults []any
 	}
 	testCases := map[string]testCase{
@@ -273,7 +269,7 @@ func TestNewFuncExtractor(t *testing.T) {
 			extractorsMap:            map[reflect.Kind]Extractor{reflect.String: StringExtractorAddingFooPrefix},
 			actualProvider:           func(tc *testCase) any { return func() { tc.called = true } },
 			wantCalled:               true,
-			expectedOutcome:          ExpectSuccess,
+			expectedOutcome:          SuccessVerifier(),
 			expectedExtractorResults: []any{nil, false},
 		},
 		"func() string called & returns result": {
@@ -286,7 +282,7 @@ func TestNewFuncExtractor(t *testing.T) {
 				}
 			},
 			wantCalled:               true,
-			expectedOutcome:          ExpectSuccess,
+			expectedOutcome:          SuccessVerifier(),
 			expectedExtractorResults: []any{"bar", true},
 		},
 		"func() string returns recursed result": {
@@ -300,7 +296,7 @@ func TestNewFuncExtractor(t *testing.T) {
 			},
 			recurse:                  true,
 			wantCalled:               true,
-			expectedOutcome:          ExpectSuccess,
+			expectedOutcome:          SuccessVerifier(),
 			expectedExtractorResults: []any{"foo: bar", true},
 		},
 		"func() error propagates returned error": {
@@ -312,9 +308,8 @@ func TestNewFuncExtractor(t *testing.T) {
 					return fmt.Errorf("foobar")
 				}
 			},
-			wantCalled:             true,
-			expectedOutcome:        ExpectFailure,
-			expectedOutcomePattern: "^Function failed: foobar$",
+			wantCalled:      true,
+			expectedOutcome: FailureVerifier(`^Function failed: foobar$`),
 		},
 		"func() error returns nil, true": {
 			defaultExtractor: ExtractorUnsupported,
@@ -326,7 +321,7 @@ func TestNewFuncExtractor(t *testing.T) {
 				}
 			},
 			wantCalled:               true,
-			expectedOutcome:          ExpectSuccess,
+			expectedOutcome:          SuccessVerifier(),
 			expectedExtractorResults: []any{nil, true},
 		},
 		"func() (string, error) returns result": {
@@ -339,7 +334,7 @@ func TestNewFuncExtractor(t *testing.T) {
 				}
 			},
 			wantCalled:               true,
-			expectedOutcome:          ExpectSuccess,
+			expectedOutcome:          SuccessVerifier(),
 			expectedExtractorResults: []any{"bar", true},
 		},
 		"func() (string, error) returns recursed result": {
@@ -353,7 +348,7 @@ func TestNewFuncExtractor(t *testing.T) {
 			},
 			recurse:                  true,
 			wantCalled:               true,
-			expectedOutcome:          ExpectSuccess,
+			expectedOutcome:          SuccessVerifier(),
 			expectedExtractorResults: []any{"foo: bar", true},
 		},
 		"func() (string, error) propagates returned error": {
@@ -365,9 +360,8 @@ func TestNewFuncExtractor(t *testing.T) {
 					return "bar", fmt.Errorf("expected failure")
 				}
 			},
-			wantCalled:             true,
-			expectedOutcome:        ExpectFailure,
-			expectedOutcomePattern: "^Function failed: expected failure$",
+			wantCalled:      true,
+			expectedOutcome: FailureVerifier(`^Function failed: expected failure$`),
 		},
 		"func() (string, int) fails because it returns more than one value": {
 			defaultExtractor: ExtractorUnsupported,
@@ -378,24 +372,23 @@ func TestNewFuncExtractor(t *testing.T) {
 					return "bar", 2
 				}
 			},
-			recurse:                true,
-			wantCalled:             false,
-			expectedOutcome:        ExpectFailure,
-			expectedOutcomePattern: `^Functions with 2 return values must return 'error' as the 2nd return value: .+$`,
+			recurse:         true,
+			wantCalled:      false,
+			expectedOutcome: FailureVerifier(`^Functions with 2 return values must return 'error' as the 2nd return value: .+$`),
 		},
 	}
 	for name, tc := range testCases {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			mt := NewMockT(t)
 			defer func() {
 				GetHelper(t).Helper()
 				if !t.Failed() && tc.wantCalled && !tc.called {
 					t.Fatalf("Expected function to be called, but it was not")
 				}
 			}()
-			defer VerifyTestOutcome(t, tc.expectedOutcome, tc.expectedOutcomePattern)
+			mt := NewMockT(t)
+			defer mt.Verify(tc.expectedOutcome)
 			extractor := NewFuncExtractor(NewValueExtractorWithMap(tc.defaultExtractor, tc.extractorsMap), tc.recurse)
 			actual, found := extractor(mt, tc.actualProvider(&tc))
 			if !cmp.Equal(tc.expectedExtractorResults, []any{actual, found}) {
