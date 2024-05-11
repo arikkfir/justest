@@ -50,7 +50,7 @@ func TestCorrectActualsPassedToMatcher(t *testing.T) {
 func TestMatcherFailureIsPropagated(t *testing.T) {
 	t.Parallel()
 	mt := NewMockT(t)
-	defer mt.Verify(FailureVerifier(`^expected failure(?m:\n^.+:\d+\s+-->\s+.+$){2}$`))
+	defer mt.Verify(FailureVerifier(`^expected failure(?m:\n^.+:\d+\s+-->\s+.+$)$`))
 	With(mt).Verify().Will(MatcherFunc(func(t T, a ...any) { t.Fatalf("expected failure") })).OrFail()
 }
 

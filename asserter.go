@@ -2,10 +2,11 @@ package justest
 
 import (
 	"fmt"
-	"github.com/arikkfir/justest/internal"
 	"path/filepath"
 	"regexp"
 	"time"
+
+	"github.com/arikkfir/justest/internal"
 )
 
 //go:noinline
@@ -293,8 +294,9 @@ func (a *assertion) Fatalf(format string, args ...any) {
 		format = format + "\n%s:%d --> %s"
 		if matches, err := regexp.MatchString(`.*/arikkfir/justest\.`, callerFunction); err != nil {
 			panic(fmt.Errorf("illegal regexp matching: %+v", err))
-		} else if matches {
-			// Caller is "justest" internal (e.g. "a.OrFail", "a.For", "a.Within") - only add the assertion location
+		} else if matches || (callerFile == a.location.File && callerLine == a.location.Line) {
+			// Caller is "justest" internal (e.g. "a.OrFail", "a.For", "a.Within") OR the caller location equals the
+			// assertion location (that can happen when assertion location has an inner function call that fails)
 			args = append(args, filepath.Base(a.location.File), a.location.Line, a.location.Source)
 		} else {
 			// Caller is not "justest" internal - add both the assertion and the caller locations
