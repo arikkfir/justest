@@ -2,6 +2,7 @@ package justest_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	. "github.com/arikkfir/justest"
@@ -40,4 +41,16 @@ func TestFail(t *testing.T) {
 			With(mt).Verify(tc.actuals...).Will(Fail()).OrFail()
 		})
 	}
+	t.Run("Succeeds if error matches one of the patterns", func(t *testing.T) {
+		t.Parallel()
+		mt := NewMockT(t)
+		defer mt.Verify(SuccessVerifier())
+		With(mt).Verify(fmt.Errorf("expected error")).Will(Fail(`^expected error$`)).OrFail()
+	})
+	t.Run("Fails if error matches none of the patterns", func(t *testing.T) {
+		t.Parallel()
+		mt := NewMockT(t)
+		defer mt.Verify(FailureVerifier(regexp.QuoteMeta(`Error message did not match any of these patterns: [^abc$ ^def$ ^ghi$]`)))
+		With(mt).Verify(fmt.Errorf("expected error")).Will(Fail(`^abc$`, `^def$`, `^ghi$`)).OrFail()
+	})
 }
