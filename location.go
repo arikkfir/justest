@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -23,6 +24,7 @@ const (
 
 var (
 	displayMode = displayModeLight
+	highlight   = true
 )
 
 // Source code highlighting
@@ -86,15 +88,6 @@ func readSourceAt(file string, line int) string {
 		lines := strings.Split(fileContents, "\n")
 		if len(lines) > line {
 			source = strings.TrimSpace(lines[line-1])
-
-			highlight := true
-			if highlightEnv := os.Getenv("JUSTEST_DISABLE_SOURCE_HIGHLIGHT"); highlightEnv != "" {
-				if val, err := strconv.ParseBool(highlightEnv); err != nil {
-					panic(fmt.Sprintf("Error parsing JUSTEST_HIGHLIGHT_SOURCE environment variable - illegal value: %s", highlightEnv))
-				} else {
-					highlight = val
-				}
-			}
 			if highlight {
 				output := bytes.Buffer{}
 				if err := quick.Highlight(&output, source, "go", goSourceFormatter, goSourceStyle[displayMode]); err == nil {
@@ -106,21 +99,35 @@ func readSourceAt(file string, line int) string {
 	return source
 }
 
-const (
-	appleScriptDarkModeQuery string = `tell application "System Events" to tell appearance preferences to get dark mode`
-)
-
 func init() {
-	cmd := exec.Command("osascript", "-e", appleScriptDarkModeQuery)
-	if out, err := cmd.Output(); err != nil {
-		displayMode = displayModeLight
-		fmt.Printf("Error determining system's dark mode: %+v\n", err)
-	} else if dark, err := strconv.ParseBool(strings.TrimSpace(string(out))); err != nil {
-		displayMode = displayModeLight
-		fmt.Printf("Error determining system's dark mode: %+v\n", err)
-	} else if dark {
-		displayMode = displayModeDark
-	} else {
-		displayMode = displayModeLight
+	const appleScriptDarkModeQuery string = `tell application "System Events" to tell appearance preferences to get dark mode`
+
+	if highlightEnv := os.Getenv("JUSTEST_DISABLE_SOURCE_HIGHLIGHT"); highlightEnv != "" {
+		if val, err := strconv.ParseBool(highlightEnv); err != nil {
+			panic(fmt.Sprintf("Error parsing JUSTEST_HIGHLIGHT_SOURCE environment variable - illegal value: %s", highlightEnv))
+		} else {
+			highlight = val
+		}
+	}
+
+	if highlight {
+		switch runtime.GOOS {
+		case "darwin":
+			cmd := exec.Command("osascript", "-e", appleScriptDarkModeQuery)
+			if out, err := cmd.Output(); err != nil {
+				fmt.Printf("Error determining system's dark mode: %+v\n", err)
+				highlight = false
+			} else if dark, err := strconv.ParseBool(strings.TrimSpace(string(out))); err != nil {
+				fmt.Printf("Error determining system's dark mode: %+v\n", err)
+				highlight = false
+			} else if dark {
+				displayMode = displayModeDark
+			} else {
+				displayMode = displayModeLight
+			}
+		case "windows", "linux":
+			// TODO: Implement a similar mechanism for Windows and Linux
+			highlight = false
+		}
 	}
 }
