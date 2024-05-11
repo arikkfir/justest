@@ -14,6 +14,18 @@ This Go testing framework has the following goals:
 * Provide a succinct yet informative error information on failures
 * Make testing easier to read and write
 
+## Attribution
+
+This library is **heavily** inspired by [Gomega](https://github.com/onsi/gomega)
+and [Ginkgo](https://github.com/onsi/ginkgo),
+two **excellent** Go testing libraries that I've used extensively in the past. If you need a full **standalone** (see
+below)
+BDD testing framework, those are highly recommended.
+
+The reason Justest was created is because Gomega and Ginkgo do not play great with `go test` (though Gomega does have a
+`go test` integration, it's still primarily meant to be used with Ginkgo) whereas Justest is meant all along to be used
+with `go test`.
+
 ## Usage
 
 ```go
@@ -84,22 +96,32 @@ You can easily create your own matchers by implementing the `Matcher` interface:
 package my_test
 
 import (
-	. "github.com/arikkfir/justest"
 	"reflect"
+
+	. "github.com/arikkfir/justest"
 )
 
 var (
 	myValueExtractor = NewValueExtractor(ExtractSameValue)
 )
 
-//go:noinline
-func BeSuperDuper() Matcher {
+// BeSuperDuper returns a matcher that will ensure that each actual value passed to "With(t).Verify(...)" will be either
+// "super duper" or "extra super duper", depending on the value of the `extraDuper` parameter.
+func BeSuperDuper(extraDuper bool) Matcher {
 	return MatcherFunc(func(t T, actuals ...any) {
 		GetHelper(t).Helper()
 		for _, actual := range actuals {
 			v := myValueExtractor.MustExtractValue(t, actual) // This is optional, but recommended, see value extraction below
-			if v.(string) != "super duper" {
-				t.Fatalf("Value '%s' is not super-duper!", v)
+			if extraDuper {
+				// Fail if it's not EXTRA super-duper
+				if v.(string) != "extra super duper" {
+					t.Fatalf("Value '%s' is not extra super-duper!", v)
+				}
+			} else {
+				// Fail if it's not super-duper
+				if v.(string) != "super duper" {
+					t.Fatalf("Value '%s' is not super-duper!", v)
+				}
 			}
 		}
 	})
@@ -108,18 +130,18 @@ func BeSuperDuper() Matcher {
 
 ## Builtin matchers
 
-| Matcher Name        | Description                                                                  |
-|---------------------|------------------------------------------------------------------------------|
-| BeBetween(min, max) | Checks that all given values are between a minimum and maximum value         |
-| BeEmpty()           | Checks that all given values are empty                                       |
-| BeGreaterThan(min)  | Checks that all given values are greater than a minimum value                |
-| BeLessThan(max)     | Checks that all given values are less than a maximum value                   |
-| BeNil()             | Checks that all given values are nil                                         |
-| EqualTo(expected)   | Checks that all given values are equal to their corresponding expected value |
-| Fail()              | Checks that the last given value is a non-nil `error` instance               |
-| Not()               | Checks that the given matcher fails                                          |
-| Say()               | Checks that all given values match the given regular expression              |
-| Succeed()           | Checks that the last given value is either nil or not an `error` instance    |
+| Matcher Name          | Description                                                                  |
+|-----------------------|------------------------------------------------------------------------------|
+| `BeBetween(min, max)` | Checks that all given values are between a minimum and maximum value         |
+| `BeEmpty()`           | Checks that all given values are empty                                       |
+| `BeGreaterThan(min)`  | Checks that all given values are greater than a minimum value                |
+| `BeLessThan(max)`     | Checks that all given values are less than a maximum value                   |
+| `BeNil()`             | Checks that all given values are nil                                         |
+| `EqualTo(expected)`   | Checks that all given values are equal to their corresponding expected value |
+| `Fail()`              | Checks that the last given value is a non-nil `error` instance               |
+| `Not()`               | Checks that the given matcher fails                                          |
+| `Say()`               | Checks that all given values match the given regular expression              |
+| `Succeed()`           | Checks that the last given value is either nil or not an `error` instance    |
 
 ## Contributing
 
