@@ -50,7 +50,7 @@ func TestFail(t *testing.T) {
 	t.Run("Fails if error matches none of the patterns", func(t *testing.T) {
 		t.Parallel()
 		mt := NewMockT(t)
-		defer mt.Verify(FailureVerifier(regexp.QuoteMeta(`Error message did not match any of these patterns: [^abc$ ^def$ ^ghi$]`)))
+		defer mt.Verify(FailureVerifier(`.*` + regexp.QuoteMeta(`[^abc$ ^def$ ^ghi$]`) + `\n.*expected error`))
 		With(mt).Verify(fmt.Errorf("expected error")).Will(Fail(`^abc$`, `^def$`, `^ghi$`)).OrFail()
 	})
 }
