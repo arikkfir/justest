@@ -2,7 +2,7 @@
 
 ## Supported Go Versions
 
-This library has been tested on Go version 1.22 only. It should work on versions though, but this has not been tested.
+This library has been tested on Go versions 1.21 and 1.22 only.
 
 | Version | Supported          |
 |---------|--------------------|
