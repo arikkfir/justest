@@ -7,6 +7,9 @@ import (
 
 //go:noinline
 func Fail(patterns ...string) Matcher {
+	const failureFormatMsg = `Error message did not match any pattern:
+	Patterns: %v
+	Error:    %s`
 	return MatcherFunc(func(t T, actuals ...any) {
 		GetHelper(t).Helper()
 
@@ -23,13 +26,14 @@ func Fail(patterns ...string) Matcher {
 		lastRT := reflect.TypeOf(last)
 		if lastRT.AssignableTo(reflect.TypeOf((*error)(nil)).Elem()) {
 			if len(patterns) > 0 {
+				msg := last.(error).Error()
 				for _, pattern := range patterns {
 					re := regexp.MustCompile(pattern)
-					if re.MatchString(last.(error).Error()) {
+					if re.MatchString(msg) {
 						return
 					}
 				}
-				t.Fatalf("Error message did not match any of these patterns: %v", patterns)
+				t.Fatalf(failureFormatMsg, patterns, msg)
 			} else {
 				return
 			}
