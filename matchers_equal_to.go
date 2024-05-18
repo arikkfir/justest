@@ -53,7 +53,7 @@ func EqualTo(expected ...any) EqualToMatcher {
 		comparator: func(t T, expected, actual any) {
 			GetHelper(t).Helper()
 			if !cmp.Equal(expected, actual, opts...) {
-				t.Fatalf("Unexpected difference (\"-\" lines are expected values; \"+\" lines are actual values):\n%s", strings.TrimSpace(cmp.Diff(expected, actual)))
+				t.Fatalf("Unexpected difference (\"-\" lines are expected values; \"+\" lines are actual values):\n%s", strings.TrimSpace(cmp.Diff(expected, actual, opts...)))
 			}
 		},
 	}
