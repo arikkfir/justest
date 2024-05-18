@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/google/go-cmp/cmp/cmpopts"
+
 	. "github.com/arikkfir/justest"
 )
 
@@ -39,6 +41,27 @@ func TestEqualTo(t *testing.T) {
 				actuals:  []any{1},
 				expected: []any{1, 2},
 				verifier: FailureVerifier(`^Unexpected difference: received 1 actual values and 2 expected values.*`),
+			},
+			"Failure diff uses opts": {
+				actuals: []any{
+					struct {
+						Public  string
+						private string
+					}{
+						Public:  "public-value",
+						private: "private-value",
+					},
+				},
+				expected: []any{
+					struct {
+						Public  string
+						private string
+					}{Public: "incorrect-value", private: "private-value"},
+					cmpopts.IgnoreUnexported(struct {
+						Public  string
+						private string
+					}{})},
+				verifier: FailureVerifier(regexp.QuoteMeta(`Unexpected difference ("-" lines are expected values; "+" lines are actual values):`) + "\n.*"),
 			},
 		}
 		for name, tc := range testCases {
