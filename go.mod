@@ -3,7 +3,7 @@ module github.com/arikkfir/justest
 go 1.21.0
 
 require (
-	github.com/alecthomas/chroma/v2 v2.13.0
+	github.com/alecthomas/chroma/v2 v2.14.0
 	github.com/google/go-cmp v0.6.0
 )
 
