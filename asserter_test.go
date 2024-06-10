@@ -22,6 +22,12 @@ func TestWith(t *testing.T) {
 		}()
 		With(nil)
 	})
+	t.Run("description propagated to failure message", func(t *testing.T) {
+		t.Parallel()
+		mt := NewMockT(t)
+		defer mt.Verify(FailureVerifier("^user feature failed: unexpected.*"))
+		With(mt).Ensure("user feature").Verify(1).Will(EqualTo(2)).OrFail()
+	})
 }
 
 func TestCorrectActualsPassedToMatcher(t *testing.T) {
