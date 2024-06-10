@@ -21,7 +21,7 @@ func With(t T) VerifierAndEnsurer {
 
 type VerifierAndEnsurer interface {
 	Verifier
-	Ensure(string) Verifier
+	Ensure(string, ...any) Verifier
 }
 
 type Verifier interface {
@@ -34,9 +34,9 @@ type verifier struct {
 }
 
 //go:noinline
-func (v *verifier) Ensure(description string) Verifier {
+func (v *verifier) Ensure(format string, args ...any) Verifier {
 	GetHelper(v.t).Helper()
-	v.desc = description
+	v.desc = fmt.Sprintf(format, args...)
 	return v
 }
 
