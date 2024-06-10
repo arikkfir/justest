@@ -2,14 +2,16 @@ package justest
 
 import (
 	"fmt"
-	"github.com/arikkfir/justest/internal"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
+
+	"github.com/arikkfir/justest/internal"
 )
 
 //go:noinline
-func With(t T) Verifier {
+func With(t T) VerifierAndEnsurer {
 	if t == nil {
 		panic("given T instance must not be nil")
 	}
@@ -17,18 +19,31 @@ func With(t T) Verifier {
 	return &verifier{t: t}
 }
 
+type VerifierAndEnsurer interface {
+	Verifier
+	Ensure(string) Verifier
+}
+
 type Verifier interface {
 	Verify(actuals ...any) Asserter
 }
 
 type verifier struct {
-	t T
+	t    T
+	desc string
+}
+
+//go:noinline
+func (v *verifier) Ensure(description string) Verifier {
+	GetHelper(v.t).Helper()
+	v.desc = description
+	return v
 }
 
 //go:noinline
 func (v *verifier) Verify(actuals ...any) Asserter {
 	GetHelper(v.t).Helper()
-	return &asserter{t: v.t, actuals: actuals}
+	return &asserter{t: v.t, desc: v.desc, actuals: actuals}
 }
 
 type Asserter interface {
@@ -38,6 +53,7 @@ type Asserter interface {
 type asserter struct {
 	t       T
 	actuals []any
+	desc    string
 }
 
 //go:noinline
@@ -46,6 +62,7 @@ func (a *asserter) Will(m Matcher) Assertion {
 
 	aa := &assertion{
 		t:        a.t,
+		desc:     a.desc,
 		location: nearestLocation(),
 		actuals:  a.actuals,
 		matcher:  m,
@@ -75,6 +92,7 @@ type assertion struct {
 	contain   bool
 	cleanup   []func()
 	evaluated bool
+	desc      string
 }
 
 //go:noinline
@@ -283,6 +301,11 @@ func (a *assertion) Failed() bool {
 //go:noinline
 func (a *assertion) Fatalf(format string, args ...any) {
 	GetHelper(a).Helper()
+
+	if a.desc != "" {
+		f := strings.ToLower(string(format[0])) + format[1:]
+		format = a.desc + " failed: " + f
+	}
 
 	if a.contain {
 		panic(internal.FormatAndArgs{Format: &format, Args: args})
