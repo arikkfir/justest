@@ -10,6 +10,8 @@ import (
 	"github.com/arikkfir/justest/internal"
 )
 
+const SlowFactorEnvVarName = "JUSTEST_SLOW_FACTOR"
+
 //go:noinline
 func With(t T) VerifierAndEnsurer {
 	if t == nil {
@@ -109,6 +111,8 @@ func (a *assertion) OrFail() {
 //go:noinline
 func (a *assertion) For(duration time.Duration, interval time.Duration) {
 	GetHelper(a.t).Helper()
+	duration = transformDurationIfNecessary(a.t, duration)
+
 	if a.evaluated {
 		panic("assertion already evaluated")
 	} else {
@@ -194,6 +198,8 @@ func (a *assertion) For(duration time.Duration, interval time.Duration) {
 //go:noinline
 func (a *assertion) Within(duration time.Duration, interval time.Duration) {
 	GetHelper(a.t).Helper()
+	duration = transformDurationIfNecessary(a.t, duration)
+
 	if a.evaluated {
 		panic("assertion already evaluated")
 	} else {
