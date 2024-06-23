@@ -155,7 +155,7 @@ func init() {
 		if val, err := strconv.ParseBool(highlightEnv); err != nil {
 			panic(fmt.Sprintf("Error parsing JUSTEST_HIGHLIGHT_SOURCE environment variable - illegal value: %s", highlightEnv))
 		} else {
-			highlight = val
+			highlight = !val
 		}
 	}
 
