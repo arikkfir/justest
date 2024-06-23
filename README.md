@@ -43,48 +43,48 @@ import (
 func TestSomething(t *testing.T) {
 	
 	// Simple assertions
-	With(t).Verify(1).Will(BeBetween(0, 2)).OrFail()
-	With(t).Verify("").Will(BeEmpty()).OrFail()
-	With(t).Verify([]int{1,2,3}).Will(BeEmpty()).OrFail() // <-- This will fail!
-	With(t).Verify(1).Will(BeGreaterThan(0)).OrFail()
-	With(t).Verify(1).Will(BeLessThan(2)).OrFail()
-	With(t).Verify("abc").Will(BeNil()).OrFail() // <-- This will fail!
-	With(t).Verify(1).Will(EqualTo(1)).OrFail()
-	With(t).Verify("abc").Will(EqualTo("def")).OrFail() // <-- This will fail!
+	With(t).VerifyThat(1).Will(BeBetween(0, 2)).Now()
+	With(t).VerifyThat("").Will(BeEmpty()).Now()
+	With(t).VerifyThat([]int{1, 2, 3}).Will(BeEmpty()).Now() // <-- This will fail!
+	With(t).VerifyThat(1).Will(BeGreaterThan(0)).Now()
+	With(t).VerifyThat(1).Will(BeLessThan(2)).Now()
+	With(t).VerifyThat("abc").Will(BeNil()).Now() // <-- This will fail!
+	With(t).VerifyThat(1).Will(EqualTo(1)).Now()
+	With(t).VerifyThat("abc").Will(EqualTo("def")).Now() // <-- This will fail!
 
 	// Assert success or failure of a function (functions can have any set of return values or none at all)
 	succeedingFunc := func() (string, error) { return "abc", nil }
-	With(t).Verify(succeedingFunc).Will(Succeed()).OrFail() // <-- Will succeed since error return value is nil
-	With(t).Verify(succeedingFunc).Will(Fail()).OrFail() // <-- Will fail since it expects error return value to be non-nil
+	With(t).VerifyThat(succeedingFunc).Will(Succeed()).Now() // <-- Will succeed since error return value is nil
+	With(t).VerifyThat(succeedingFunc).Will(Fail()).Now()    // <-- Will fail since it expects error return value to be non-nil
 	failingFunc := func() (string, error) { return "", fmt.Errorf("error") }
-	With(t).Verify(failingFunc).Will(Succeed()).OrFail() // <-- Will fail since error return value is not nil
-	With(t).Verify(failingFunc).Will(Fail()).OrFail() // <-- Will succeed since it expects error return value to be non-nil
+	With(t).VerifyThat(failingFunc).Will(Succeed()).Now() // <-- Will fail since error return value is not nil
+	With(t).VerifyThat(failingFunc).Will(Fail()).Now()    // <-- Will succeed since it expects error return value to be non-nil
 
 	// Assert negation of another assertion
-	With(t).Verify(1).Will(Not(EqualTo(2))).OrFail()
+	With(t).VerifyThat(1).Will(Not(EqualTo(2))).Now()
 	
 	// Assert something will **eventually** match
 	// It will stop when the function succeeds (no assertion failure) or when time runs out
-	With(t).Verify(func(t T) {
+	With(t).VerifyThat(func(t T) {
 
 		// Will be invoked every 100ms until either it no longer fails or until time runs out (10s)
-		With(t).Verify(2).Will(EqualTo(2)).OrFail()
+		With(t).VerifyThat(2).Will(EqualTo(2)).Now()
 
 	}).Will(Succeed()).Within(10*time.Second, 100*time.Millisecond)
 
 	// Assert something will **repeatedly** match for a certain amount of time
 	// It will stop on the first time the function fails
-	With(t).Verify(func(t T) {
+	With(t).VerifyThat(func(t T) {
 
 		// Will be invoked every 100ms until either it fails or until time runs out (10s)
-		With(t).Verify(2).Will(EqualTo(2)).OrFail()
+		With(t).VerifyThat(2).Will(EqualTo(2)).Now()
 
 	}).Will(Succeed()).For(10*time.Second, 100*time.Millisecond)
 
 	// Assert on text patterns
-	With(t).Verify("abc").Will(Say("^a*c$")).OrFail()
-	With(t).Verify("abc").Will(Say(regexp.MustCompile("^a*c$"))).OrFail()
-	With(t).Verify([]byte("abc")).Will(Say("^a*c$")).OrFail()
+	With(t).VerifyThat("abc").Will(Say("^a*c$")).Now()
+	With(t).VerifyThat("abc").Will(Say(regexp.MustCompile("^a*c$"))).Now()
+	With(t).VerifyThat([]byte("abc")).Will(Say("^a*c$")).Now()
 }
 ```
 
@@ -105,7 +105,7 @@ var (
 	myValueExtractor = NewValueExtractor(ExtractSameValue)
 )
 
-// BeSuperDuper returns a matcher that will ensure that each actual value passed to "With(t).Verify(...)" will be either
+// BeSuperDuper returns a matcher that will ensure that each actual value passed to "With(t).VerifyThat(...)" will be either
 // "super duper" or "extra super duper", depending on the value of the `extraDuper` parameter.
 func BeSuperDuper(extraDuper bool) Matcher {
 	return MatcherFunc(func(t T, actuals ...any) {

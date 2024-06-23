@@ -29,8 +29,8 @@ func TestSay(t *testing.T) {
 			t.Parallel()
 			mt := NewMockT(t)
 			defer mt.Verify(tc.verifier)
-			With(mt).Verify(tc.actuals...).Will(Say(tc.expected)).OrFail()
-			With(mt).Verify(tc.actuals...).Will(Say(regexp.MustCompile(tc.expected))).OrFail()
+			With(mt).VerifyThat(tc.actuals...).Will(Say(tc.expected)).Now()
+			With(mt).VerifyThat(tc.actuals...).Will(Say(regexp.MustCompile(tc.expected))).Now()
 		})
 	}
 }

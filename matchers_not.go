@@ -69,7 +69,7 @@ func Not(m Matcher) Matcher {
 					panic(fmt.Errorf("unexpected panic: %+v", r))
 				}
 			} else {
-				t.Fatalf("Expected this matcher to fail, but it did not")
+				t.Fatalf("Expected mismatch did not happen")
 			}
 		}()
 

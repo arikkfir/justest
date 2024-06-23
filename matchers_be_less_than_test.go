@@ -86,7 +86,7 @@ func TestBeLessThan(t *testing.T) {
 					t.Parallel()
 					mt := NewMockT(t)
 					defer mt.Verify(tc.verifier)
-					With(mt).Verify(tc.actual).Will(BeLessThan(tc.max)).OrFail()
+					With(mt).VerifyThat(tc.actual).Will(BeLessThan(tc.max)).Now()
 				})
 			}
 		})
@@ -95,6 +95,6 @@ func TestBeLessThan(t *testing.T) {
 		t.Parallel()
 		mt := NewMockT(t)
 		defer mt.Verify(FailureVerifier(`Expected actual value to be of type 'int64', but it is of type 'int'`))
-		With(mt).Verify(1).Will(BeLessThan(int64(0))).OrFail()
+		With(mt).VerifyThat(1).Will(BeLessThan(int64(0))).Now()
 	})
 }
