@@ -108,6 +108,8 @@ func (a *asserter) Will(m Matcher) Assertion {
 }
 
 type Assertion interface {
+	// Deprecated: OrFail is a synonym for Now.
+	OrFail()
 	Now()
 	For(duration time.Duration, interval time.Duration)
 	Within(duration time.Duration, interval time.Duration)
@@ -122,6 +124,17 @@ type assertion struct {
 	cleanup   []func()
 	evaluated bool
 	desc      string
+}
+
+//go:noinline
+func (a *assertion) OrFail() {
+	GetHelper(a.t).Helper()
+	if a.evaluated {
+		panic("assertion already evaluated")
+	} else {
+		a.evaluated = true
+	}
+	a.matcher.Assert(a, a.actuals...)
 }
 
 //go:noinline
