@@ -33,7 +33,7 @@ func TestBeEmpty(t *testing.T) {
 			t.Parallel()
 			mt := NewMockT(t)
 			defer mt.Verify(tc.verifier)
-			With(mt).Verify(tc.actual).Will(BeEmpty()).OrFail()
+			With(mt).VerifyThat(tc.actual).Will(BeEmpty()).Now()
 		})
 	}
 }

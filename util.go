@@ -3,6 +3,7 @@ package justest
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -18,4 +19,15 @@ func transformDurationIfNecessary(t T, d time.Duration) time.Duration {
 		}
 	}
 	return d
+}
+
+func indentIfMultiLine(s string) string {
+	if strings.Contains(s, "\n") {
+		lines := strings.Split(s, "\n")
+		for i, line := range lines {
+			lines[i] = "\t" + line
+		}
+		return "\n" + strings.Join(lines, "\n")
+	}
+	return s
 }

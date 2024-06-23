@@ -21,7 +21,7 @@ func TestNot(t *testing.T) {
 		"Successful matcher fails": {
 			actuals:  []any{"foo-bar"},
 			matcher:  MatcherFunc(func(t T, actual ...any) {}),
-			verifier: FailureVerifier(`Expected this matcher to fail, but it did not`),
+			verifier: FailureVerifier(`Expected mismatch did not happen`),
 		},
 		"Panicking matcher re-panics": {
 			actuals:  []any{"foo-bar"},
@@ -35,7 +35,7 @@ func TestNot(t *testing.T) {
 			t.Parallel()
 			mt := NewMockT(t)
 			defer mt.Verify(tc.verifier)
-			With(mt).Verify(tc.actuals...).Will(Not(tc.matcher)).OrFail()
+			With(mt).VerifyThat(tc.actuals...).Will(Not(tc.matcher)).Now()
 		})
 	}
 }

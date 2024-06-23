@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/arikkfir/justest/internal"
@@ -13,7 +12,7 @@ import (
 const SlowFactorEnvVarName = "JUSTEST_SLOW_FACTOR"
 
 //go:noinline
-func With(t T) VerifierAndEnsurer {
+func With(t T) VerifyOrEnsure {
 	if t == nil {
 		panic("given T instance must not be nil")
 	}
@@ -21,13 +20,22 @@ func With(t T) VerifierAndEnsurer {
 	return &verifier{t: t}
 }
 
-type VerifierAndEnsurer interface {
-	Verifier
-	Ensure(string, ...any) Verifier
+type VerifyOrEnsure interface {
+	// EnsureThat adds a description to the upcoming assertion, which will be printed in case it fails.
+	EnsureThat(string, ...any) Ensurer
+
+	// Deprecated: Ensure is a synonym for EnsureThat.
+	Ensure(string, ...any) Ensurer
+
+	// VerifyThat starts an assertion without a description.
+	VerifyThat(actuals ...any) Asserter
+
+	// Deprecated: Verify is a synonym for VerifyThat.
+	Verify(actuals ...any) Asserter
 }
 
-type Verifier interface {
-	Verify(actuals ...any) Asserter
+type Ensurer interface {
+	ByVerifying(actuals ...any) Asserter
 }
 
 type verifier struct {
@@ -36,10 +44,29 @@ type verifier struct {
 }
 
 //go:noinline
-func (v *verifier) Ensure(format string, args ...any) Verifier {
+func (v *verifier) EnsureThat(format string, args ...any) Ensurer {
 	GetHelper(v.t).Helper()
 	v.desc = fmt.Sprintf(format, args...)
 	return v
+}
+
+//go:noinline
+func (v *verifier) Ensure(format string, args ...any) Ensurer {
+	GetHelper(v.t).Helper()
+	v.desc = fmt.Sprintf(format, args...)
+	return v
+}
+
+//go:noinline
+func (v *verifier) ByVerifying(actuals ...any) Asserter {
+	GetHelper(v.t).Helper()
+	return &asserter{t: v.t, desc: v.desc, actuals: actuals}
+}
+
+//go:noinline
+func (v *verifier) VerifyThat(actuals ...any) Asserter {
+	GetHelper(v.t).Helper()
+	return &asserter{t: v.t, desc: v.desc, actuals: actuals}
 }
 
 //go:noinline
@@ -81,7 +108,7 @@ func (a *asserter) Will(m Matcher) Assertion {
 }
 
 type Assertion interface {
-	OrFail()
+	Now()
 	For(duration time.Duration, interval time.Duration)
 	Within(duration time.Duration, interval time.Duration)
 }
@@ -98,7 +125,7 @@ type assertion struct {
 }
 
 //go:noinline
-func (a *assertion) OrFail() {
+func (a *assertion) Now() {
 	GetHelper(a.t).Helper()
 	if a.evaluated {
 		panic("assertion already evaluated")
@@ -309,8 +336,7 @@ func (a *assertion) Fatalf(format string, args ...any) {
 	GetHelper(a).Helper()
 
 	if a.desc != "" {
-		f := strings.ToLower(string(format[0])) + format[1:]
-		format = a.desc + " failed: " + f
+		format = fmt.Sprintf("Assertion that %s failed: %s", a.desc, format)
 	}
 
 	if a.contain {
@@ -319,18 +345,20 @@ func (a *assertion) Fatalf(format string, args ...any) {
 		caller := internal.CallerAt(1)
 		callerFunction, callerFile, callerLine := caller.Location()
 
-		format = format + "\n%s:%d --> %s"
-		if matches, err := regexp.MatchString(`.*/arikkfir/justest\.`, callerFunction); err != nil {
+		// Check if direct caller is from within the "justest" package; if NOT (application test code) print the caller
+		if internalCall, err := regexp.MatchString(`.*/arikkfir/justest\.`, callerFunction); err != nil {
 			panic(fmt.Errorf("illegal regexp matching: %+v", err))
-		} else if matches {
-			// Caller is "justest" internal (e.g. "a.OrFail", "a.For", "a.Within") - only add the assertion location
-			args = append(args, filepath.Base(a.location.File), a.location.Line, a.location.Source)
-		} else {
-			// Caller is not "justest" internal - add both the assertion and the caller locations
+		} else if !internalCall {
+			// Direct caller is NOT from the "justest" package; thus we also print the caller, in addition to the
+			// location of the actual assertion (which is always printed)
 			format = format + "\n%s:%d --> %s"
-			args = append(args, filepath.Base(callerFile), callerLine, readSourceAt(callerFile, callerLine))
-			args = append(args, filepath.Base(a.location.File), a.location.Line, a.location.Source)
+			args = append(args, filepath.Base(callerFile), callerLine, indentIfMultiLine(readSourceAt(callerFile, callerLine)))
 		}
+
+		// Always print the assertion location
+		format = format + "\n%s:%d --> %s"
+		args = append(args, filepath.Base(a.location.File), a.location.Line, indentIfMultiLine(a.location.Source))
+
 		a.t.Fatalf(format, args...)
 	}
 }

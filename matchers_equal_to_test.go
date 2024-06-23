@@ -70,7 +70,7 @@ func TestEqualTo(t *testing.T) {
 				t.Parallel()
 				mt := NewMockT(t)
 				defer mt.Verify(tc.verifier)
-				With(mt).Verify(tc.actuals...).Will(EqualTo(tc.expected...)).OrFail()
+				With(mt).VerifyThat(tc.actuals...).Will(EqualTo(tc.expected...)).Now()
 			})
 		}
 	})
@@ -169,7 +169,7 @@ func TestEqualTo(t *testing.T) {
 				mt := NewMockT(t)
 				defer mt.Verify(tc.outcomeVerifier)
 				comparatorFunc, verifierFunc := tc.comparatorFactory(mt, &tc)
-				With(mt).Verify(tc.actuals...).Will(EqualTo(tc.expected...).Using(comparatorFunc)).OrFail()
+				With(mt).VerifyThat(tc.actuals...).Will(EqualTo(tc.expected...).Using(comparatorFunc)).Now()
 				if verifierFunc != nil {
 					verifierFunc()
 				}

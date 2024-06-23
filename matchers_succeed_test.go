@@ -24,7 +24,7 @@ func TestSucceed(t *testing.T) {
 			t.Parallel()
 			mt := NewMockT(t)
 			defer mt.Verify(tc.verifier)
-			With(mt).Verify(tc.actuals...).Will(Succeed()).OrFail()
+			With(mt).VerifyThat(tc.actuals...).Will(Succeed()).Now()
 		})
 	}
 }
