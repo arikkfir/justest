@@ -108,10 +108,18 @@ func (a *asserter) Will(m Matcher) Assertion {
 }
 
 type Assertion interface {
+	// Now will perform the assertion and fail immediately if it mismatches.
+	Now()
+
 	// Deprecated: OrFail is a synonym for Now.
 	OrFail()
-	Now()
+
+	// For will continually perform the assertion until the given duration has passed or until it mismatches. If it
+	// mismatched once, the assertion is considered failed.
 	For(duration time.Duration, interval time.Duration)
+
+	// Within will continually perform the assertion until the given duration has passed or until it successfully
+	// matches. If the duration has passed without any successful matches, the assertion is considered failed.
 	Within(duration time.Duration, interval time.Duration)
 }
 
