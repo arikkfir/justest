@@ -108,9 +108,11 @@ func (a *asserter) Will(m Matcher) Assertion {
 }
 
 type Assertion interface {
-
 	// Now will perform the assertion and fail immediately if it mismatches.
 	Now()
+
+	// Deprecated: OrFail is a synonym for Now.
+	OrFail()
 
 	// For will continually perform the assertion until the given duration has passed or until it mismatches. If it
 	// mismatched once, the assertion is considered failed.
@@ -130,6 +132,17 @@ type assertion struct {
 	cleanup   []func()
 	evaluated bool
 	desc      string
+}
+
+//go:noinline
+func (a *assertion) OrFail() {
+	GetHelper(a.t).Helper()
+	if a.evaluated {
+		panic("assertion already evaluated")
+	} else {
+		a.evaluated = true
+	}
+	a.matcher.Assert(a, a.actuals...)
 }
 
 //go:noinline
