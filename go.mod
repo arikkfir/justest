@@ -4,7 +4,7 @@ go 1.21.0
 
 require (
 	github.com/alecthomas/chroma/v2 v2.14.0
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 )
 
 require github.com/dlclark/regexp2 v1.11.0 // indirect
